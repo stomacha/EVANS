@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#030810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>EVANS</title>
+<style>
+  :root{
+    --bg:#030810; --bg2:#06111f;
+    --blue:#2ea8ff; --blue2:#8fd3ff; --blue3:#bfe9ff;
+    --ink:#d8ecff; --dim:#6f8fb0; --dim2:#3a5577;
+    --glow:.55; --spin:1;
+    --size:min(68vw,300px);
+    --panel:rgba(8,22,40,.72); --line:rgba(80,160,255,.28);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:radial-gradient(ellipse at 50% 40%, #0a1d35 0%, var(--bg2) 40%, var(--bg) 100%);
+    color:var(--ink);
+    font-family:"SF Mono",ui-monospace,Menlo,Consolas,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",monospace,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+    -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
+  }
+  #app{position:fixed;inset:0;display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0}
+  .brand{font-size:13px;letter-spacing:.35em;color:var(--blue2);font-weight:600}
+  .brand small{display:block;font-size:9px;letter-spacing:.2em;color:var(--dim);margin-top:3px}
+  .hdr-right{display:flex;align-items:center;gap:10px}
+  .iconbtn{background:none;border:1px solid var(--line);color:var(--blue2);width:34px;height:34px;border-radius:50%;
+    display:grid;place-items:center;font-size:16px;cursor:pointer}
+  .iconbtn:active{background:rgba(46,168,255,.15)}
+  .power{position:relative;width:64px;height:34px;border-radius:17px;border:1px solid var(--line);background:rgba(10,30,55,.8);
+    cursor:pointer;transition:background .3s,border-color .3s;font-size:9px;letter-spacing:.15em;color:var(--dim)}
+  .power span{position:absolute;top:50%;transform:translateY(-50%)}
+  .power .lbl-off{right:9px}.power .lbl-on{left:9px;opacity:0}
+  .power .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#2b4a6d;transition:left .3s,background .3s,box-shadow .3s}
+  .power.on{background:rgba(46,168,255,.22);border-color:var(--blue)}
+  .power.on .knob{left:33px;background:var(--blue3);box-shadow:0 0 14px var(--blue)}
+  .power.on .lbl-off{opacity:0}.power.on .lbl-on{opacity:1;color:var(--blue2)}
+
+  /* stage */
+  main{flex:1;position:relative;display:grid;place-items:center;min-height:0}
+  #stage{position:relative;width:100%;height:100%;display:grid;place-items:center}
+  .reactor{position:relative;width:var(--size);height:var(--size);filter:drop-shadow(0 0 calc(30px*var(--glow)) rgba(46,168,255,.6))}
+  .ring{position:absolute;border-radius:50%}
+  .r0{inset:-6%;border:1px solid rgba(80,160,255,.25);
+    background:repeating-conic-gradient(from 0deg, rgba(120,200,255,.55) 0 .6deg, transparent .6deg 6deg);
+    -webkit-mask:radial-gradient(circle, transparent 93%, #000 93.5%);mask:radial-gradient(circle, transparent 93%, #000 93.5%);
+    animation:spin calc(60s/var(--spin)) linear infinite}
+  .r1{inset:0;border:2px solid rgba(80,180,255,.65);
+    box-shadow:0 0 30px rgba(0,160,255,calc(.5*var(--glow))), inset 0 0 30px rgba(0,160,255,calc(.35*var(--glow)));
+    animation:spin calc(24s/var(--spin)) linear infinite}
+  .r1::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid transparent;border-top-color:var(--blue3);border-right-color:rgba(191,233,255,.4)}
+  .r2{inset:11%;
+    background:repeating-conic-gradient(from 0deg, rgba(120,200,255,.9) 0 7deg, transparent 7deg 15deg);
+    -webkit-mask:radial-gradient(circle, transparent 78%, #000 79%);mask:radial-gradient(circle, transparent 78%, #000 79%);
+    animation:spin calc(16s/var(--spin)) linear infinite reverse}
+  .r3{inset:24%;border:5px double rgba(140,210,255,.85);animation:spin calc(36s/var(--spin)) linear infinite}
+  .r3::before{content:"";position:absolute;inset:6%;border-radius:50%;border:1px dashed rgba(140,210,255,.5)}
+  .core{position:absolute;inset:35%;border-radius:50%;
+    background:radial-gradient(circle, #ffffff 0%, var(--blue3) 22%, var(--blue) 52%, rgba(0,80,160,0) 72%);
+    box-shadow:0 0 calc(70px*var(--glow)) calc(22px*var(--glow)) rgba(60,170,255,.65);
+    animation:pulse calc(2.8s/var(--spin)) ease-in-out infinite}
+  .core::after{content:"";position:absolute;inset:34%;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,255,255,.2) 60%,transparent 70%)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.07);opacity:1}}
+
+  .reactor.standby{--glow:.35;--spin:.6}
+  .reactor.listening{--glow:.7;--spin:1.2}
+  .reactor.awaiting{--glow:1;--spin:2}
+  .reactor.thinking{--glow:.9;--spin:3.2}
+  .reactor.speaking{--glow:1.1;--spin:1.6}
+  .reactor.speaking .core{animation-duration:.55s}
+  .reactor.off{--glow:.12;--spin:.25;filter:saturate(.3) drop-shadow(0 0 6px rgba(46,168,255,.2))}
+
+  #orbits{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+  .ow{position:absolute;left:0;top:0;white-space:nowrap;font-size:11px;letter-spacing:.18em;color:var(--blue2);
+    text-shadow:0 0 8px rgba(46,168,255,.8);will-change:transform,opacity;text-transform:uppercase}
+  .ow.ko{letter-spacing:.08em;text-transform:none}
+
+  .state{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.35em;color:var(--dim)}
+  .state b{color:var(--blue2);font-weight:600}
+  .state .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--blue);margin-right:8px;vertical-align:middle;box-shadow:0 0 8px var(--blue)}
+  .reactor.off ~ .state .dot{background:#345;box-shadow:none}
+
+  /* panels */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:10px;line-height:1.55;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);min-width:0}
+  .panel h4{margin:0 0 4px;font-size:9px;letter-spacing:.3em;color:var(--dim);font-weight:600}
+  .panel .big{font-size:14px;color:var(--blue2);letter-spacing:.08em;font-weight:600}
+  .panel .row{display:flex;justify-content:space-between;gap:8px;color:var(--ink)}
+  .panel .row span:first-child{color:var(--dim)}
+  .tier{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-radius:999px;font-size:9px;letter-spacing:.15em;color:var(--blue2);margin-left:4px;vertical-align:middle}
+  .tier.haiku{border-color:#3fbf8f;color:#7fe0b8}.tier.sonnet{border-color:#4aa3ff;color:#9ed1ff}.tier.opus{border-color:#b98cff;color:#d7bfff}
+  .bar{height:3px;background:rgba(80,160,255,.15);border-radius:2px;margin-top:4px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--blue3));transition:width .5s}
+
+  footer{padding:8px 12px 10px;display:flex;flex-direction:column;gap:8px}
+  .panels{display:flex;gap:8px;align-items:stretch}
+  .panels .panel{flex:1}
+  .subs{text-align:center;min-height:44px;display:flex;flex-direction:column;justify-content:flex-end;gap:3px}
+  .sub-en{font-size:10px;color:var(--dim);letter-spacing:.02em;line-height:1.35;font-family:Georgia,"Times New Roman",serif;font-style:italic}
+  .sub-ko{font-size:12px;color:var(--ink);line-height:1.5;font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    text-shadow:0 0 10px rgba(46,168,255,.35)}
+  .sub-ko.err{color:#ff9d9d}
+  .typebar{display:flex;gap:6px}
+  .typebar input{flex:1;background:rgba(8,22,40,.8);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 11px;font-size:13px;outline:none;font-family:inherit}
+  .typebar button{background:rgba(46,168,255,.18);border:1px solid var(--blue);color:var(--blue3);border-radius:8px;padding:0 14px;font-size:12px;letter-spacing:.1em;cursor:pointer}
+  .typebar.hidden{display:none}
+
+  @media (min-width:860px){
+    :root{--size:min(44vh,360px)}
+    .panels{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);pointer-events:none;padding:0 28px;justify-content:space-between}
+    .panels .panel{flex:0 0 230px;pointer-events:auto;font-size:11px}
+    footer{padding-bottom:18px}
+    .subs{min-height:56px}.sub-ko{font-size:14px}.sub-en{font-size:11px}
+    .ow{font-size:12px}
+  }
+
+  /* settings */
+  dialog{background:#071527;color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;width:min(92vw,420px);
+    font-family:inherit;box-shadow:0 20px 80px rgba(0,0,0,.6)}
+  dialog::backdrop{background:rgba(0,4,10,.7);backdrop-filter:blur(4px)}
+  dialog h3{margin:0 0 12px;font-size:12px;letter-spacing:.3em;color:var(--blue2)}
+  dialog label{display:block;font-size:10px;letter-spacing:.15em;color:var(--dim);margin:10px 0 4px}
+  dialog input,dialog select{width:100%;background:rgba(8,22,40,.9);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none}
+  dialog .hint{font-size:10px;color:var(--dim);line-height:1.5;margin-top:6px}
+  dialog .hint a{color:var(--blue2)}
+  dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+  dialog button{background:rgba(46,168,255,.18);border:1px solid var(--blue);color:var(--blue3);border-radius:8px;padding:8px 14px;font-size:11px;letter-spacing:.1em;cursor:pointer;font-family:inherit}
+  dialog button.ghost{background:none;border-color:var(--line);color:var(--dim)}
+  .log{max-height:120px;overflow:auto;font-size:10px;color:var(--dim);background:rgba(0,0,0,.25);border-radius:8px;padding:8px;margin-top:8px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">E·V·A·N·S<small>VOICE INTERFACE · CLAUDE</small></div>
+    <div class="hdr-right">
+      <button class="iconbtn" id="btnType" title="텍스트 입력">⌨</button>
+      <button class="iconbtn" id="btnSettings" title="설정">⚙</button>
+      <button class="power" id="power" aria-pressed="false"><span class="lbl-on">ON</span><span class="lbl-off">OFF</span><i class="knob"></i></button>
+    </div>
+  </header>
+
+  <main>
+    <div id="stage">
+      <div class="reactor off" id="reactor">
+        <div class="ring r0"></div><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="core"></div>
+      </div>
+      <div id="orbits"></div>
+      <div class="state"><span class="dot"></span><b id="stateText">OFFLINE</b></div>
+    </div>
+    <div class="panels">
+      <div class="panel" id="usagePanel">
+        <h4>USAGE · 사용량</h4>
+        <div class="big" id="uCost">$0.0000</div>
+        <div class="row"><span>오늘 요청</span><span id="uReq">0</span></div>
+        <div class="row"><span>입력 토큰</span><span id="uIn">0</span></div>
+        <div class="row"><span>출력 토큰</span><span id="uOut">0</span></div>
+        <div class="row"><span>최근 응답</span><span id="uLast">—</span></div>
+        <div class="bar"><i id="uBar"></i></div>
+      </div>
+      <div class="panel" id="routePanel">
+        <h4>ROUTED MODEL · 라우팅</h4>
+        <div class="big" id="rName">STANDBY<span class="tier" id="rTier">—</span></div>
+        <div class="row"><span>복잡도</span><span id="rScore">—</span></div>
+        <div class="row"><span>근거</span><span id="rWhy">대기 중</span></div>
+        <div class="row"><span>지연</span><span id="rLat">—</span></div>
+        <div class="bar"><i id="rBar"></i></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="subs">
+      <div class="sub-en" id="subEn"></div>
+      <div class="sub-ko" id="subKo">전원을 켜고 "자비스"라고 불러보세요.</div>
+    </div>
+    <form class="typebar hidden" id="typebar" autocomplete="off">
+      <input id="typeInput" placeholder="자비스에게 할 말을 입력…" enterkeyhint="send">
+      <button type="submit">SEND</button>
+    </form>
+  </footer>
+</div>
+
+<dialog id="settings">
+  <h3>SETTINGS · 설정</h3>
+  <label>ANTHROPIC API KEY</label>
+  <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+  <div class="hint">키는 이 브라우저의 localStorage에만 저장되고, 요청은 폰에서 api.anthropic.com으로 직접 전송됩니다. <a href="https://platform.claude.com/" target="_blank" rel="noopener">콘솔</a>에서 지출 한도를 걸어둔 키를 쓰세요.</div>
+  <label>WAKE WORD · 호출어</label>
+  <input id="sWake" placeholder="자비스">
+  <label>MIC LANGUAGE · 인식 언어</label>
+  <select id="sLang">
+    <option value="ko-KR">한국어 (ko-KR)</option>
+    <option value="en-US">English (en-US)</option>
+    <option value="en-GB">English UK (en-GB)</option>
+    <option value="ja-JP">日本語 (ja-JP)</option>
+  </select>
+  <label>VOICE · 음성</label>
+  <select id="sVoice"><option value="">자동 (영국식 남성 우선)</option></select>
+  <label>ROUTING · 라우팅</label>
+  <select id="sRoute">
+    <option value="auto">자동 (복잡도에 따라 Haiku / Sonnet / Opus)</option>
+    <option value="claude-haiku-5-5">항상 Haiku 5.5</option>
+    <option value="claude-sonnet-5-5">항상 Sonnet 5.5</option>
+    <option value="claude-opus-5-5">항상 Opus 5.5</option>
+  </select>
+  <div class="log" id="log">—</div>
+  <div class="actions">
+    <button class="ghost" id="sReset" type="button">사용량 초기화</button>
+    <button class="ghost" id="sTest" type="button">음성 테스트</button>
+    <button id="sSave" type="button">저장</button>
+  </div>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ---------- config ---------- */
+const MODELS = {
+  'claude-haiku-5-5':  {name:'HAIKU 5.5',  tier:'haiku',  inP:0.10, outP:0.50, effort:'low'},
+  'claude-sonnet-5-5': {name:'SONNET 5.5', tier:'sonnet', inP:2.00, outP:10.0, effort:'low'},
+  'claude-opus-5-5':   {name:'OPUS 5.5',   tier:'opus',   inP:4.00, outP:20.0, effort:'medium'},
+};
+const API_URL = 'https://api.anthropic.com/v1/messages';
+const SYSTEM = `You are EVANS, a personal AI assistant in the manner of J.A.R.V.I.S. from the Iron Man films: a calm, unflappable British butler-engineer. Address the user as "Sir". Be concise, precise, quietly witty, and loyal. Never break character, never mention being an AI model unless asked directly.
+
+Always reply in English. Your reply is read aloud, so keep it to one to three short sentences unless the task truly needs more; never use markdown, lists, or code fences in the spoken text.
+
+Respond with ONLY a JSON object, nothing before or after it:
+{"en": "<your spoken English reply>", "ko": "<natural Korean translation of the same reply, for subtitles>"}`;
+
+const DEFAULTS = {key:'', wake:'자비스', lang:'ko-KR', voice:'', route:'auto'};
+let cfg = Object.assign({}, DEFAULTS, safeJSON(localStorage.getItem('evans.cfg')) || {});
+let usage = loadUsage();
+
+/* ---------- dom ---------- */
+const reactor=$('reactor'), stateText=$('stateText'), subEn=$('subEn'), subKo=$('subKo');
+const power=$('power'), orbits=$('orbits'), logEl=$('log');
+
+/* ---------- state ---------- */
+let on=false, awaiting=false, busy=false, speaking=false;
+let rec=null, recActive=false, awaitTimer=null, restartTimer=null;
+let history=[]; // Claude messages
+let unlocked=false;
+
+function setState(s, label){
+  reactor.className = 'reactor ' + s;
+  stateText.textContent = label;
+}
+function setSubs(en, ko, isErr){
+  subEn.textContent = en || '';
+  subKo.textContent = ko || '';
+  subKo.classList.toggle('err', !!isErr);
+}
+function log(m){ const t=new Date().toLocaleTimeString(); logEl.textContent = (t+' '+m+'\n'+logEl.textContent).slice(0,4000); }
+
+/* ---------- orbit words ---------- */
+let words=[], lastT=0, baseR=170;
+function measure(){ const r=reactor.getBoundingClientRect(); baseR = r.width/2 + 26; }
+function setOrbitWords(list){
+  orbits.innerHTML=''; words=[];
+  const rings=[{k:1.0,ry:.42,tilt:-16,sp:.22},{k:1.26,ry:.36,tilt:14,sp:-.16},{k:1.52,ry:.3,tilt:34,sp:.11}];
+  list.slice(0,18).forEach((w,i)=>{
+    const el=document.createElement('span'); el.className='ow'+(/[가-힣]/.test(w)?' ko':''); el.textContent=w; orbits.appendChild(el);
+    const ring=rings[i%3];
+    words.push({el, a:(i/ list.length)*Math.PI*2 + Math.random()*.6, ...ring});
+  });
+}
+function tick(ts){
+  const dt = lastT? Math.min(.05,(ts-lastT)/1000):0; lastT=ts;
+  const mult = reactor.classList.contains('thinking')?2.4: reactor.classList.contains('off')?.35:1;
+  for(const w of words){
+    w.a += w.sp*dt*mult;
+    const rx=Math.min(baseR*w.k, window.innerWidth/2-14), ry=rx*w.ry, t=w.tilt*Math.PI/180;
+    const x=rx*Math.cos(w.a), y=ry*Math.sin(w.a);
+    const xr=x*Math.cos(t)-y*Math.sin(t), yr=x*Math.sin(t)+y*Math.cos(t);
+    const depth=(Math.sin(w.a)+1)/2; // 1 = front
+    const s=.7+.4*depth, o=(reactor.classList.contains('off')?.25:.3)+.7*depth;
+    w.el.style.transform=`translate(-50%,-50%) translate(${xr.toFixed(1)}px,${yr.toFixed(1)}px) scale(${s.toFixed(3)})`;
+    w.el.style.opacity=o.toFixed(2);
+    w.el.style.zIndex=depth>.5?3:1;
+  }
+  requestAnimationFrame(tick);
+}
+const IDLE_WORDS=['STANDBY','SYSTEMS NOMINAL','E.V.A.N.S','AWAITING INPUT','CLAUDE','ARC CORE','ONLINE','ROUTER IDLE','자비스','LISTENING'];
+setOrbitWords(['OFFLINE','E.V.A.N.S','POWER DOWN','STANDBY','CLAUDE','ARC CORE']);
+measure(); window.addEventListener('resize', measure); requestAnimationFrame(tick);
+
+function keywordsFrom(en, model){
+  const stop=new Set('the and that with this from have your sir will would could should there their about which just into very more some what when then than they them been were also only like over such much many make made'.split(' '));
+  const ws=(en||'').toLowerCase().replace(/[^a-z\s']/g,' ').split(/\s+/).filter(w=>w.length>4 && !stop.has(w));
+  const uniq=[...new Set(ws)].slice(0,10);
+  return [MODELS[model].name, 'ROUTED', ...uniq, 'E.V.A.N.S'];
+}
+
+/* ---------- routing ---------- */
+const HEAVY=[
+  [/코드|프로그램|함수|알고리즘|구현|code|program|function|algorithm|implement|debug|디버그|스크립트|script/i,'코드'],
+  [/분석|analy[sz]|비교|compar|평가|evaluat|검토|review|진단|diagnos/i,'분석'],
+  [/설계|design|계획|plan|전략|strateg|아키텍처|architect|로드맵|roadmap/i,'설계'],
+  [/증명|prove|proof|수학|math|방정식|equation|미분|적분|확률|통계|statistic/i,'수학'],
+  [/작성|write|써\s*줘|essay|에세이|보고서|report|기사|article|이메일|email|편지|letter|시나리오|script/i,'작성'],
+  [/단계|step by step|자세히|상세|in detail|detailed|깊이|deep|thorough|철저/i,'상세'],
+  [/왜|why|어떻게|how|원인|cause|차이|difference/i,'추론'],
+  [/요약|summar|번역|translat|정리|organize/i,'변환'],
+];
+function routeFor(text){
+  if(cfg.route!=='auto') return {model:cfg.route, score:null, why:'수동 고정'};
+  let score=0; const hits=[];
+  const len=text.replace(/\s+/g,'').length;
+  if(len>30) score++; if(len>80) score++; if(len>180) score++;
+  for(const [re,label] of HEAVY){ if(re.test(text)){ score++; hits.push(label);} }
+  const clauses=text.split(/[,.;?!。，、]|그리고|그리고 나서|그 다음|and then|\bthen\b/i).filter(s=>s.trim().length>3).length;
+  if(clauses>=3) score++;
+  const simple=/^(안녕|하이|hello|hi|hey|고마워|thanks|thank you|몇\s*시|what time|오늘 날짜|날씨|how are you|잘 지내|good morning|good night|잘자|이름이 뭐|who are you)/i.test(text.trim());
+  if(simple) score=Math.min(score,0);
+  const model = score<=1?'claude-haiku-5-5' : score<=3?'claude-sonnet-5-5' : 'claude-opus-5-5';
+  const why = (hits.length?hits.slice(0,3).join('·'):(len>30?'긴 요청':'짧은 요청')) + (simple?' · 인사':'');
+  return {model, score, why};
+}
+function showRoute(r){
+  const m=MODELS[r.model];
+  $('rName').innerHTML = m.name+'<span class="tier '+m.tier+'" id="rTier">'+m.tier.toUpperCase()+'</span>';
+  $('rScore').textContent = r.score==null?'—':(r.score+' / 10');
+  $('rWhy').textContent = r.why;
+  $('rBar').style.width = (m.tier==='haiku'?30:m.tier==='sonnet'?65:100)+'%';
+}
+
+/* ---------- usage ---------- */
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function loadUsage(){
+  const u=safeJSON(localStorage.getItem('evans.usage'))||{};
+  if(u.day!==todayKey()) return {day:todayKey(),req:0,inp:0,out:0,cost:0,last:''};
+  return u;
+}
+function saveUsage(){ localStorage.setItem('evans.usage', JSON.stringify(usage)); }
+function addUsage(model, u, ms){
+  const m=MODELS[model]||MODELS['claude-sonnet-5-5'];
+  const inp=(u.input_tokens||0)+(u.cache_read_input_tokens||0)+(u.cache_creation_input_tokens||0);
+  const out=u.output_tokens||0;
+  const cost = inp/1e6*m.inP + out/1e6*m.outP;
+  usage.req++; usage.inp+=inp; usage.out+=out; usage.cost+=cost;
+  usage.last = `${inp}→${out} · ${(ms/1000).toFixed(1)}s`;
+  saveUsage(); renderUsage();
+}
+function renderUsage(){
+  $('uCost').textContent = '$'+usage.cost.toFixed(4);
+  $('uReq').textContent = usage.req;
+  $('uIn').textContent = usage.inp.toLocaleString();
+  $('uOut').textContent = usage.out.toLocaleString();
+  $('uLast').textContent = usage.last||'—';
+  $('uBar').style.width = Math.min(100, usage.cost/1.0*100)+'%'; // bar = share of $1/day
+}
+renderUsage();
+
+/* ---------- speech synthesis ---------- */
+const synth=window.speechSynthesis;
+let voices=[];
+function loadVoices(){
+  voices=synth?synth.getVoices():[];
+  const sel=$('sVoice'); const cur=cfg.voice;
+  sel.innerHTML='<option value="">자동 (영국식 남성 우선)</option>';
+  voices.filter(v=>/^en/i.test(v.lang)).forEach(v=>{
+    const o=document.createElement('option'); o.value=v.name; o.textContent=`${v.name} (${v.lang})`; if(v.name===cur) o.selected=true; sel.appendChild(o);
+  });
+}
+if(synth){ loadVoices(); synth.onvoiceschanged=loadVoices; }
+function pickVoice(){
+  if(cfg.voice){ const v=voices.find(v=>v.name===cfg.voice); if(v) return v; }
+  const pref=[/daniel/i,/george/i,/arthur/i,/ryan/i,/google uk english male/i,/en-GB/i,/en_GB/i,/en-US/i,/^en/i];
+  for(const p of pref){ const v=voices.find(v=>p.test(v.name)||p.test(v.lang)); if(v) return v; }
+  return null;
+}
+function speak(text){
+  return new Promise(res=>{
+    if(!synth){ res(); return; }
+    synth.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    const v=pickVoice(); if(v) u.voice=v; u.lang=(v&&v.lang)||'en-GB'; u.rate=1.02; u.pitch=.85;
+    speaking=true; pauseRec();
+    const done=()=>{ if(!speaking) return; speaking=false; res(); };
+    u.onend=done; u.onerror=done;
+    synth.speak(u);
+    setTimeout(()=>{ if(speaking && !synth.speaking){ done(); } }, 1500); // safety
+    setTimeout(done, 1500 + text.length*90);
+  });
+}
+function unlockAudio(){ if(unlocked||!synth) return; try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; synth.speak(u);}catch(e){} unlocked=true; }
+
+/* ---------- speech recognition ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function wakeVariants(){
+  const w=(cfg.wake||'자비스').trim();
+  const base=[w, w.replace(/\s+/g,'')];
+  if(/자비스/.test(w)) base.push('쟈비스','자비수','자비쓰','자비즈','자비스야','jarvis','javis','jervis');
+  return [...new Set(base.map(s=>s.toLowerCase()))];
+}
+function norm(s){ return s.toLowerCase().replace(/[\s.,!?~]/g,''); }
+function findWake(text){
+  const n=norm(text);
+  for(const w of wakeVariants()){ const i=n.indexOf(norm(w)); if(i>=0) return {idx:i, len:norm(w).length, n}; }
+  return null;
+}
+function startRec(){
+  if(!SR||!on||recActive||speaking||busy) return;
+  try{
+    rec=new SR(); rec.lang=cfg.lang||'ko-KR'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+    rec.onstart=()=>{ recActive=true; if(!busy&&!speaking) setState(awaiting?'awaiting':'listening', awaiting?'AWAITING COMMAND':'LISTENING'); };
+    rec.onresult=onResult;
+    rec.onerror=e=>{ log('rec error: '+e.error); if(e.error==='not-allowed'||e.error==='service-not-allowed'){ setSubs('', '마이크 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.', true); powerOff(); } };
+    rec.onend=()=>{ recActive=false; if(on && !speaking && !busy){ clearTimeout(restartTimer); restartTimer=setTimeout(startRec, 250);} };
+    rec.start();
+  }catch(e){ log('rec start fail: '+e.message); recActive=false; }
+}
+function pauseRec(){ clearTimeout(restartTimer); if(rec&&recActive){ try{ rec.onend=null; rec.stop(); }catch(e){} recActive=false; } }
+function resumeRec(){ if(on&&!speaking&&!busy){ clearTimeout(restartTimer); restartTimer=setTimeout(startRec,150);} }
+
+let lastFinalIdx=-1;
+function onResult(ev){
+  let finalText='', interim='';
+  for(let i=ev.resultIndex;i<ev.results.length;i++){
+    const r=ev.results[i]; const t=r[0].transcript;
+    if(r.isFinal){ finalText+=t+' '; } else interim+=t;
+  }
+  if(interim && !awaiting){ const w=findWake(interim); if(w){ setState('awaiting','WAKE WORD?'); } }
+  if(!finalText.trim()) return;
+  const text=finalText.trim();
+  log('heard: '+text);
+  if(awaiting){
+    clearTimeout(awaitTimer); awaiting=false;
+    handleCommand(text);
+    return;
+  }
+  const w=findWake(text);
+  if(!w) return;
+  // text after the wake word (approximate: strip up to wake word in original)
+  const after = sliceAfterWake(text);
+  if(after && after.replace(/[\s,.!?]/g,'').length>=2){
+    wakeAck().then(()=>handleCommand(after));
+  }else{
+    wakeAck().then(()=>{
+      awaiting=true; setState('awaiting','AWAITING COMMAND'); setSubs('Yes, Sir.', '네, 주인님. 말씀하세요.');
+      resumeRec();
+      awaitTimer=setTimeout(()=>{ awaiting=false; if(on&&!busy) { setState('listening','LISTENING'); setSubs('', '대기 중…'); } }, 10000);
+    });
+  }
+}
+function sliceAfterWake(text){
+  const variants=wakeVariants().sort((a,b)=>b.length-a.length);
+  const low=text.toLowerCase();
+  for(const v of variants){ const i=low.indexOf(v); if(i>=0) return text.slice(i+v.length).replace(/^[\s,.!?야아]+/,'').trim(); }
+  // fallback: strip spaces and search
+  return '';
+}
+async function wakeAck(){
+  setState('awaiting','YES, SIR'); setSubs('Yes, Sir.', '네, 주인님.');
+  await speak('Yes, Sir.');
+}
+
+/* ---------- claude ---------- */
+async function handleCommand(text){
+  if(busy) return;
+  if(!cfg.key){ setSubs('', 'API 키가 없습니다. ⚙ 설정에서 입력해 주세요.', true); $('settings').showModal(); return; }
+  busy=true; pauseRec();
+  const route=routeFor(text); showRoute(route);
+  setState('thinking','PROCESSING · '+MODELS[route.model].name);
+  setSubs('', '“'+text+'”');
+  setOrbitWords(['PROCESSING', MODELS[route.model].name, 'ROUTING', ...text.split(/\s+/).slice(0,8), 'CLAUDE']);
+  const t0=performance.now();
+  try{
+    const r=await askClaude(route.model, text);
+    const ms=performance.now()-t0; $('rLat').textContent=(ms/1000).toFixed(1)+'s';
+    addUsage(r.model||route.model, r.usage||{}, ms);
+    if(r.stop_reason==='refusal'){
+      const en="I'm afraid I can't assist with that one, Sir."; setSubs(en,'죄송하지만 그 요청은 도와드릴 수 없습니다.');
+      setState('speaking','SPEAKING'); await speak(en);
+    }else{
+      const parsed=parseReply(r);
+      history.push({role:'user',content:text}, {role:'assistant',content:r.content});
+      if(history.length>12) history=history.slice(-12);
+      setOrbitWords(keywordsFrom(parsed.en, route.model));
+      setSubs(parsed.en, parsed.ko);
+      setState('speaking','SPEAKING · '+MODELS[route.model].name);
+      await speak(parsed.en);
+    }
+  }catch(e){
+    log('api error: '+e.message);
+    const ko = /401|auth/i.test(e.message)?'API 키가 올바르지 않습니다.' : /429/.test(e.message)?'요청 한도에 걸렸습니다. 잠시 후 다시 시도하세요.' : /Failed to fetch|NetworkError/i.test(e.message)?'네트워크 오류입니다. 연결을 확인하세요.' : '오류: '+e.message.slice(0,140);
+    setSubs("I'm afraid I've hit a snag, Sir.", ko, true);
+    setState('speaking','ERROR'); await speak("I'm afraid I've hit a snag, Sir.");
+  }
+  busy=false;
+  if(on){ setState('listening','LISTENING'); resumeRec(); } else setState('off','OFFLINE');
+}
+async function askClaude(model, text, allowFallback=true){
+  const body={
+    model, max_tokens:4096,
+    system:SYSTEM,
+    messages:[...history, {role:'user', content:text}],
+    output_config:{effort:MODELS[model].effort},
+  };
+  const headers={'content-type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+  if(allowFallback && model!=='claude-haiku-5-5'){ body.fallbacks='default'; headers['anthropic-beta']='server-side-fallback-2026-07-01'; }
+  const res=await fetch(API_URL,{method:'POST',headers,body:JSON.stringify(body)});
+  if(!res.ok){
+    const txt=await res.text();
+    if(res.status===400 && allowFallback && /fallback/i.test(txt)) return askClaude(model,text,false);
+    throw new Error(res.status+' '+txt.slice(0,200));
+  }
+  return res.json();
+}
+function parseReply(r){
+  const txt=(r.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+  const m=txt.match(/\{[\s\S]*\}/);
+  if(m){ try{ const j=JSON.parse(m[0]); if(j.en) return {en:String(j.en), ko:String(j.ko||'')}; }catch(e){} }
+  return {en:txt.replace(/```[a-z]*|```/g,'').trim(), ko:''};
+}
+
+/* ---------- power ---------- */
+async function powerOn(){
+  if(!SR){ setSubs('', '이 브라우저는 음성 인식을 지원하지 않습니다. Chrome 또는 iOS Safari 14.5+를 사용하거나 ⌨ 텍스트 입력을 쓰세요.', true); $('typebar').classList.remove('hidden'); }
+  on=true; power.classList.add('on'); power.setAttribute('aria-pressed','true');
+  unlockAudio();
+  setOrbitWords(IDLE_WORDS);
+  setState('listening','LISTENING'); setSubs('', `“${cfg.wake||'자비스'}”라고 부르면 응답합니다.`);
+  if(!cfg.key){ setSubs('', 'API 키가 없습니다. ⚙ 설정에서 입력해 주세요.', true); }
+  await speak('Systems online, Sir.');
+  resumeRec();
+}
+function powerOff(){
+  on=false; awaiting=false; clearTimeout(awaitTimer); power.classList.remove('on'); power.setAttribute('aria-pressed','false');
+  pauseRec(); if(synth) synth.cancel(); speaking=false;
+  setState('off','OFFLINE'); setSubs('', '전원이 꺼졌습니다.');
+  setOrbitWords(['OFFLINE','E.V.A.N.S','POWER DOWN','STANDBY','CLAUDE','ARC CORE']);
+}
+power.addEventListener('click', ()=>{ on?powerOff():powerOn(); });
+
+/* ---------- text fallback ---------- */
+$('btnType').addEventListener('click', ()=>{ $('typebar').classList.toggle('hidden'); if(!$('typebar').classList.contains('hidden')) $('typeInput').focus(); });
+$('typebar').addEventListener('submit', e=>{ e.preventDefault(); const v=$('typeInput').value.trim(); if(!v) return; $('typeInput').value=''; unlockAudio(); handleCommand(v); });
+
+/* ---------- settings ---------- */
+const dlg=$('settings');
+$('btnSettings').addEventListener('click', ()=>{
+  $('sKey').value=cfg.key; $('sWake').value=cfg.wake; $('sLang').value=cfg.lang; $('sRoute').value=cfg.route; loadVoices(); dlg.showModal();
+});
+$('sSave').addEventListener('click', ()=>{
+  cfg={key:$('sKey').value.trim(), wake:$('sWake').value.trim()||'자비스', lang:$('sLang').value, voice:$('sVoice').value, route:$('sRoute').value};
+  localStorage.setItem('evans.cfg', JSON.stringify(cfg)); dlg.close();
+  if(on){ pauseRec(); resumeRec(); setSubs('', '설정이 저장되었습니다.'); }
+});
+$('sTest').addEventListener('click', ()=>{ cfg.voice=$('sVoice').value; unlockAudio(); speak('Yes, Sir. All systems are operational.'); });
+$('sReset').addEventListener('click', ()=>{ usage={day:todayKey(),req:0,inp:0,out:0,cost:0,last:''}; saveUsage(); renderUsage(); });
+dlg.addEventListener('click', e=>{ if(e.target===dlg) dlg.close(); });
+
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) pauseRec(); else resumeRec(); });
+
+function safeJSON(s){ try{ return s?JSON.parse(s):null; }catch(e){ return null; } }
+if(!cfg.key) log('API 키를 설정하세요.');
+if(!SR) log('SpeechRecognition 미지원 브라우저');
+})();
+</script>
+</body>
+</html>
